@@ -1,0 +1,381 @@
+-- ========================================================
+-- STEAL AN EGG: ADVANCED GUI + PLAYER PROFILE + ANTI-KICK
+-- ========================================================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+
+-- ==================== ANTI-KICK SYSTEM ====================
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    
+    -- Harangan ang 'Kick' function mula sa game scripts
+    if method == "Kick" or method == "kick" then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "🛡️ Anti-Kick Active";
+            Text = "Naharang ang pag-kick sa iyo ng laro!";
+            Duration = 3;
+        })
+        return nil
+    end
+    
+    return oldNamecall(self, ...)
+end)
+
+if setfflag then
+    pcall(function() setfflag("AbuseReportScreenshotPercentage", "0") end)
+end
+-- ==========================================================
+
+-- Clean up existing GUI if re-executed
+if CoreGui:FindFirstChild("StealEggProHub") then
+    CoreGui.StealEggProHub:Destroy()
+end
+
+-- ScreenGui Parent
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "StealEggProHub"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+-- ========================================================
+-- 1. LOADING SCREEN SYSTEM
+-- ========================================================
+local LoadingFrame = Instance.new("Frame")
+local LoadingCorner = Instance.new("UICorner")
+local LoadingTitle = Instance.new("TextLabel")
+local LoadingSub = Instance.new("TextLabel")
+local BarBackground = Instance.new("Frame")
+local BarFill = Instance.new("Frame")
+
+LoadingFrame.Name = "LoadingFrame"
+LoadingFrame.Parent = ScreenGui
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+LoadingFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
+LoadingFrame.Size = UDim2.new(0, 340, 0, 180)
+LoadingFrame.Active = true
+
+LoadingCorner.CornerRadius = UDim.new(0, 14)
+LoadingCorner.Parent = LoadingFrame
+
+LoadingTitle.Parent = LoadingFrame
+LoadingTitle.BackgroundTransparency = 1
+LoadingTitle.Position = UDim2.new(0, 0, 0.15, 0)
+LoadingTitle.Size = UDim2.new(1, 0, 0, 30)
+LoadingTitle.Font = Enum.Font.GothamBold
+LoadingTitle.Text = "STEAL AN EGG"
+LoadingTitle.TextColor3 = Color3.fromRGB(0, 255, 170)
+LoadingTitle.TextSize = 20
+
+LoadingSub.Parent = LoadingFrame
+LoadingSub.BackgroundTransparency = 1
+LoadingSub.Position = UDim2.new(0, 0, 0.35, 0)
+LoadingSub.Size = UDim2.new(1, 0, 0, 25)
+LoadingSub.Font = Enum.Font.GothamMedium
+LoadingSub.Text = "STEAL AN EGG LOADING... OPENED DELTA"
+LoadingSub.TextColor3 = Color3.fromRGB(200, 200, 220)
+LoadingSub.TextSize = 13
+
+BarBackground.Parent = LoadingFrame
+BarBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+BarBackground.Position = UDim2.new(0.1, 0, 0.65, 0)
+BarBackground.Size = UDim2.new(0.8, 0, 0, 12)
+
+local BarBgCorner = Instance.new("UICorner")
+BarBgCorner.CornerRadius = UDim.new(0, 6)
+BarBgCorner.Parent = BarBackground
+
+BarFill.Parent = BarBackground
+BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+
+local BarFillCorner = Instance.new("UICorner")
+BarFillCorner.CornerRadius = UDim.new(0, 6)
+BarFillCorner.Parent = BarFill
+
+-- ========================================================
+-- 2. MAIN MENU GUI (REAL-LIFE / SLEEK DESIGN)
+-- ========================================================
+local MainFrame = Instance.new("Frame")
+local MainCorner = Instance.new("UICorner")
+local ProfileFrame = Instance.new("Frame")
+local AvatarImg = Instance.new("ImageLabel")
+local PlayerName = Instance.new("TextLabel")
+local PlayerUsername = Instance.new("TextLabel")
+local TitleHeader = Instance.new("TextLabel")
+local CloseBtn = Instance.new("TextButton")
+
+-- TP System Elements
+local SetPosBtn = Instance.new("TextButton")
+local GoPosBtn = Instance.new("TextButton")
+local EggList = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
+local RefreshBtn = Instance.new("TextButton")
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 380, 0, 420)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = false
+
+MainCorner.CornerRadius = UDim.new(0, 16)
+MainCorner.Parent = MainFrame
+
+-- Header Title
+TitleHeader.Parent = MainFrame
+TitleHeader.BackgroundColor3 = Color3.fromRGB(26, 26, 38)
+TitleHeader.Size = UDim2.new(1, 0, 0, 42)
+TitleHeader.Font = Enum.Font.GothamBold
+TitleHeader.Text = "  🥚 STEAL AN EGG - PRO HUB"
+TitleHeader.TextColor3 = Color3.fromRGB(0, 255, 170)
+TitleHeader.TextSize = 15
+TitleHeader.TextXAlignment = Enum.TextXAlignment.Left
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 16)
+HeaderCorner.Parent = TitleHeader
+
+-- Close Button
+CloseBtn.Parent = MainFrame
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+CloseBtn.Position = UDim2.new(0.88, 0, 0.02, 0)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Player Profile Section
+ProfileFrame.Parent = MainFrame
+ProfileFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+ProfileFrame.Position = UDim2.new(0.05, 0, 0.13, 0)
+ProfileFrame.Size = UDim2.new(0.9, 0, 0, 60)
+
+local ProfCorner = Instance.new("UICorner")
+ProfCorner.CornerRadius = UDim.new(0, 10)
+ProfCorner.Parent = ProfileFrame
+
+AvatarImg.Parent = ProfileFrame
+AvatarImg.Position = UDim2.new(0.03, 0, 0.1, 0)
+AvatarImg.Size = UDim2.new(0, 48, 0, 48)
+AvatarImg.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1, 0)
+AvatarCorner.Parent = AvatarImg
+
+PlayerName.Parent = ProfileFrame
+PlayerName.BackgroundTransparency = 1
+PlayerName.Position = UDim2.new(0.2, 0, 0.15, 0)
+PlayerName.Size = UDim2.new(0.75, 0, 0, 20)
+PlayerName.Font = Enum.Font.GothamBold
+PlayerName.Text = LocalPlayer.DisplayName
+PlayerName.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayerName.TextSize = 14
+PlayerName.TextXAlignment = Enum.TextXAlignment.Left
+
+PlayerUsername.Parent = ProfileFrame
+PlayerUsername.BackgroundTransparency = 1
+PlayerUsername.Position = UDim2.new(0.2, 0, 0.5, 0)
+PlayerUsername.Size = UDim2.new(0.75, 0, 0, 20)
+PlayerUsername.Font = Enum.Font.Gotham
+PlayerUsername.Text = "@" .. LocalPlayer.Name
+PlayerUsername.TextColor3 = Color3.fromRGB(150, 150, 170)
+PlayerUsername.TextSize = 12
+PlayerUsername.TextXAlignment = Enum.TextXAlignment.Left
+
+-- SET POSITION & GO TO TELEPORT BUTTONS
+SetPosBtn.Parent = MainFrame
+SetPosBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+SetPosBtn.Position = UDim2.new(0.05, 0, 0.30, 0)
+SetPosBtn.Size = UDim2.new(0.43, 0, 0, 38)
+SetPosBtn.Font = Enum.Font.GothamBold
+SetPosBtn.Text = "📍 SET POSITION"
+SetPosBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SetPosBtn.TextSize = 12
+
+local SetCorner = Instance.new("UICorner")
+SetCorner.CornerRadius = UDim.new(0, 8)
+SetCorner.Parent = SetPosBtn
+
+GoPosBtn.Parent = MainFrame
+GoPosBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
+GoPosBtn.Position = UDim2.new(0.52, 0, 0.30, 0)
+GoPosBtn.Size = UDim2.new(0.43, 0, 0, 38)
+GoPosBtn.Font = Enum.Font.GothamBold
+GoPosBtn.Text = "🚀 GO TO POSITION"
+GoPosBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GoPosBtn.TextSize = 12
+
+local GoCorner = Instance.new("UICorner")
+GoCorner.CornerRadius = UDim.new(0, 8)
+GoCorner.Parent = GoPosBtn
+
+-- Egg List Scrolling Container
+EggList.Parent = MainFrame
+EggList.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+EggList.Position = UDim2.new(0.05, 0, 0.42, 0)
+EggList.Size = UDim2.new(0.9, 0, 0.46, 0)
+EggList.CanvasSize = UDim2.new(0, 0, 2, 0)
+EggList.ScrollBarThickness = 5
+
+UIListLayout.Parent = EggList
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 6)
+
+-- Refresh Button
+RefreshBtn.Parent = MainFrame
+RefreshBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 140)
+RefreshBtn.Position = UDim2.new(0.05, 0, 0.90, 0)
+RefreshBtn.Size = UDim2.new(0.9, 0, 0, 32)
+RefreshBtn.Font = Enum.Font.GothamBold
+RefreshBtn.Text = "🔄 REFRESH / SCAN EGGS"
+RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshBtn.TextSize = 12
+
+local RefCorner = Instance.new("UICorner")
+RefCorner.CornerRadius = UDim.new(0, 8)
+RefCorner.Parent = RefreshBtn
+
+-- ========================================================
+-- 3. LOGIC & ENGINE
+-- ========================================================
+local savedCFrame = nil
+
+-- Set Position Event
+SetPosBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        savedCFrame = hrp.CFrame
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Position Saved!";
+            Text = "Nai-save ang pwesto mo bilang Safe Zone.";
+            Duration = 3;
+        })
+    end
+end)
+
+-- Go to Position Event
+GoPosBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        if savedCFrame then
+            hrp.CFrame = savedCFrame
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Teleported!";
+                Text = "Naka-teleport ka na sa na-set mong Position!";
+                Duration = 3;
+            })
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "No Position Set!";
+                Text = "Pindutin muna ang 'SET POSITION' sa iyong safe zone.";
+                Duration = 3;
+            })
+        end
+    end
+end)
+
+-- Steal Egg Engine
+local function StealEgg(eggObject)
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if not hrp then return end
+
+    local returnPosition = savedCFrame or hrp.CFrame
+
+    local targetCFrame
+    if eggObject:IsA("BasePart") then
+        targetCFrame = eggObject.CFrame
+    elseif eggObject:IsA("Model") then
+        targetCFrame = eggObject:GetPivot()
+    end
+
+    if targetCFrame then
+        hrp.CFrame = targetCFrame + Vector3.new(0, 3, 0)
+        task.wait(0.3)
+        hrp.CFrame = returnPosition
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Egg Stolen!";
+            Text = "Nakuha ang " .. eggObject.Name .. " at nakabalik sa Safe Position!";
+            Duration = 3;
+        })
+    end
+end
+
+-- Scan Eggs Function
+local function ScanEggs()
+    for _, child in pairs(EggList:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+
+    local foundCount = 0
+
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if string.find(string.lower(obj.Name), "egg") then
+            if obj:IsA("BasePart") or obj:IsA("Model") then
+                foundCount = foundCount + 1
+
+                local Btn = Instance.new("TextButton")
+                Btn.Parent = EggList
+                Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+                Btn.Size = UDim2.new(0.96, 0, 0, 34)
+                Btn.Font = Enum.Font.GothamMedium
+                Btn.Text = " 🥚 " .. obj.Name
+                Btn.TextColor3 = Color3.fromRGB(240, 240, 255)
+                Btn.TextSize = 12
+                Btn.TextXAlignment = Enum.TextXAlignment.Left
+
+                local BtnCorner = Instance.new("UICorner")
+                BtnCorner.CornerRadius = UDim.new(0, 6)
+                BtnCorner.Parent = Btn
+
+                Btn.MouseButton1Click:Connect(function()
+                    StealEgg(obj)
+                end)
+            end
+        end
+    end
+
+    if foundCount == 0 then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Scan Complete";
+            Text = "Walang nahanap na Egg sa map.";
+            Duration = 3;
+        })
+    end
+end
+
+RefreshBtn.MouseButton1Click:Connect(ScanEggs)
+
+-- ========================================================
+-- 4. LOADING ANIMATION EXECUTION
+-- ========================================================
+task.spawn(function()
+    for i = 1, 100 do
+        BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
+        task.wait(0.02)
+    end
+    LoadingFrame:Destroy()
+    MainFrame.Visible = true
+    ScanEggs()
+end)
