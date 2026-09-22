@@ -1,0 +1,192 @@
+-- Steal an Egg: Instant TP + Auto Return + Anti-Kick Script
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- ==================== ANTI-KICK SYSTEM ====================
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    
+    -- Harangan ang 'Kick' call mula sa game scripts
+    if method == "Kick" or method == "kick" then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Anti-Kick Protected";
+            Text = "Naharang ang pag-kick sa iyo ng laro!";
+            Duration = 3;
+        })
+        return nil
+    end
+    
+    return oldNamecall(self, ...)
+end)
+
+-- Alt-Anti Kick Backup
+if setfflag then
+    pcall(function() setfflag("AbuseReportScreenshotPercentage", "0") end)
+end
+-- ==========================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local Title = Instance.new("TextLabel")
+local EggList = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
+local RefreshBtn = Instance.new("TextButton")
+local CloseBtn = Instance.new("TextButton")
+
+ScreenGui.Name = "EggStealHub"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
+
+-- Main Frame
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+MainFrame.Position = UDim2.new(0.35, 0, 0.25, 0)
+MainFrame.Size = UDim2.new(0, 320, 0, 320)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+-- Title
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "STEAL EGG + ANTI-KICK"
+Title.TextColor3 = Color3.fromRGB(0, 255, 170)
+Title.TextSize = 16.000
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = Title
+
+-- Listahan ng Eggs
+EggList.Parent = MainFrame
+EggList.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+EggList.Position = UDim2.new(0.05, 0, 0.16, 0)
+EggList.Size = UDim2.new(0.9, 0, 0.68, 0)
+EggList.CanvasSize = UDim2.new(0, 0, 2, 0)
+EggList.ScrollBarThickness = 6
+
+UIListLayout.Parent = EggList
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
+
+-- Refresh Button
+RefreshBtn.Parent = MainFrame
+RefreshBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+RefreshBtn.Position = UDim2.new(0.05, 0, 0.86, 0)
+RefreshBtn.Size = UDim2.new(0.9, 0, 0, 35)
+RefreshBtn.Font = Enum.Font.SourceSansBold
+RefreshBtn.Text = "🔄 SCAN / REFRESH EGGS"
+RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshBtn.TextSize = 14.000
+
+local RefCorner = Instance.new("UICorner")
+RefCorner.CornerRadius = UDim.new(0, 8)
+RefCorner.Parent = RefreshBtn
+
+-- Close Button
+CloseBtn.Parent = MainFrame
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+CloseBtn.Position = UDim2.new(0.86, 0, 0.02, 0)
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14.000
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Main Steal Engine: TP -> Wait -> Return Back
+local function StealEgg(eggObject)
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if not hrp then return end
+
+    -- 1. Save Base position
+    local originalCFrame = hrp.CFrame
+
+    -- 2. Target Egg CFrame
+    local targetCFrame
+    if eggObject:IsA("BasePart") then
+        targetCFrame = eggObject.CFrame
+    elseif eggObject:IsA("Model") then
+        targetCFrame = eggObject:GetPivot()
+    end
+
+    if targetCFrame then
+        -- Teleport papunta sa Egg
+        hrp.CFrame = targetCFrame + Vector3.new(0, 3, 0)
+        
+        -- Wait time para sa touch detection
+        task.wait(0.3)
+
+        -- Teleport pabalik sa Base pwesto
+        hrp.CFrame = originalCFrame
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Success!";
+            Text = "Nakuha ang " .. eggObject.Name .. " at nakabalik sa pwesto!";
+            Duration = 3;
+        })
+    end
+end
+
+-- Function para mag-scan ng Eggs
+local function ScanEggs()
+    for _, child in pairs(EggList:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+
+    local foundCount = 0
+
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if string.find(string.lower(obj.Name), "egg") then
+            if obj:IsA("BasePart") or obj:IsA("Model") then
+                foundCount = foundCount + 1
+
+                local Btn = Instance.new("TextButton")
+                Btn.Parent = EggList
+                Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+                Btn.Size = UDim2.new(0.95, 0, 0, 35)
+                Btn.Font = Enum.Font.SourceSans
+                Btn.Text = "🥚 " .. obj.Name
+                Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Btn.TextSize = 13.000
+
+                local BtnCorner = Instance.new("UICorner")
+                BtnCorner.CornerRadius = UDim.new(0, 6)
+                BtnCorner.Parent = Btn
+
+                Btn.MouseButton1Click:Connect(function()
+                    StealEgg(obj)
+                end)
+            end
+        end
+    end
+
+    if foundCount == 0 then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Notice";
+            Text = "Walang nahanap na Egg sa map.";
+            Duration = 3;
+        })
+    end
+end
+
+ScanEggs()
+RefreshBtn.MouseButton1Click:Connect(ScanEggs)
